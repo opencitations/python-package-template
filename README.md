@@ -16,9 +16,9 @@ A template for creating Python packages with UV dependency management, pytest te
 
 ## Prerequisites
 
-- Python 3.10+
-- UV (recommended) or pip
-- Node.js and npm (only if you want documentation site)
+- **UV**: Install from https://docs.astral.sh/uv/getting-started/installation/
+- **Python 3.10+**: UV can install Python for you with `uv python install`
+- **Node.js and npm** (only for documentation site): Install from https://nodejs.org/en/download
 
 ## Setup
 

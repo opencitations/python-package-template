@@ -1,7 +1,6 @@
 # Package Name
 
 [![Run tests](https://github.com/opencitations/python-package-template/actions/workflows/tests.yml/badge.svg)](https://github.com/opencitations/python-package-template/actions/workflows/tests.yml)
-[![PyPI version](https://badge.fury.io/py/package-name.svg)](https://badge.fury.io/py/package-name)
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
 
 Package description.

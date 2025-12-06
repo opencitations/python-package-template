@@ -202,7 +202,6 @@ def main() -> int:
 
     files_to_update = [
         SCRIPT_DIR / "pyproject.toml",
-        SCRIPT_DIR / "README.md",
         SCRIPT_DIR / "LICENSE.md",
         SCRIPT_DIR / "src" / package_underscore / "__init__.py",
         SCRIPT_DIR / "tests" / "test_example.py",
@@ -213,6 +212,16 @@ def main() -> int:
             print_step(f"Updating {filepath.relative_to(SCRIPT_DIR)}")
             replace_in_file(filepath, replacements)
             print_success(f"{filepath.name} updated")
+
+    readme_template = SCRIPT_DIR / "README_TEMPLATE.md"
+    readme_path = SCRIPT_DIR / "README.md"
+    if readme_template.exists():
+        print_step("Generating README.md from template...")
+        content = readme_template.read_text()
+        for old, new in replacements.items():
+            content = content.replace(old, new)
+        readme_path.write_text(content)
+        print_success("README.md generated")
 
     if include_docs:
         npm_available = shutil.which("npm") is not None
@@ -274,7 +283,7 @@ def main() -> int:
     print_step("Removing setup files")
     setup_files = [
         SCRIPT_DIR / "setup.py",
-        SCRIPT_DIR / "TEMPLATE_SETUP.md",
+        SCRIPT_DIR / "README_TEMPLATE.md",
     ]
     for filepath in setup_files:
         if filepath.exists():

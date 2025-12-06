@@ -1,59 +1,39 @@
-# Package Name
+# Python package template
 
-[![Run tests](https://github.com/opencitations/python-package-template/actions/workflows/tests.yml/badge.svg)](https://github.com/opencitations/python-package-template/actions/workflows/tests.yml)
-[![PyPI version](https://badge.fury.io/py/package-name.svg)](https://badge.fury.io/py/package-name)
-[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
+A template for creating Python packages with UV dependency management, pytest testing, semantic-release versioning, and optional Astro Starlight documentation.
 
-Package description.
+## Prerequisites
 
-## Installation
+- Python 3.10+
+- UV (recommended) or pip
+- Node.js and npm (only if you want documentation site)
 
-```bash
-pip install package-name
-```
+## Setup
 
-## Usage
-
-```python
-from package_name import example_function
-
-result = example_function()
-print(result)
-```
-
-## Documentation
-
-Full documentation is available at: https://username.github.io/package-name/
-
-## Development
-
-This project uses [UV](https://docs.astral.sh/uv/) for dependency management.
-
-### Setup
+Run the setup script:
 
 ```bash
-# Clone the repository
-git clone https://github.com/username/package-name.git
-cd package-name
-
-# Install dependencies
-uv sync --all-extras --dev
+python setup.py
 ```
 
-### Running tests
+The script will ask for:
+- Package name
+- Description
+- Author name and email
+- GitHub username/organization
+- Whether to include a Starlight documentation site
 
-```bash
-uv run pytest tests/
-```
+It will automatically configure all files and remove itself when done.
 
-### Building documentation locally
+## After running the script
 
-```bash
-cd docs
-npm install
-npm run dev
-```
+Configure your GitHub repository:
 
-## License
+1. **Add PyPI token** (for publishing releases)
+   - Create a token at https://pypi.org/manage/account/token/
+   - Go to Settings > Secrets and variables > Actions
+   - Add a new secret named `PYPI_TOKEN`
 
-This project is licensed under the ISC License - see the [LICENSE.md](LICENSE.md) file for details.
+2. **Enable GitHub Pages** (only if you included documentation)
+   - Go to Settings > Pages
+   - Set Source to "GitHub Actions"

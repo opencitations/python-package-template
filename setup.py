@@ -180,6 +180,7 @@ def main() -> int:
         print_success("Package directory renamed")
 
     replacements = {
+        "opencitations/python-package-template": f"{github_username}/{package_name}",
         "package-name": package_name,
         "package_name": package_underscore,
         "Package Name": package_title,

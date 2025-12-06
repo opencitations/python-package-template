@@ -105,7 +105,7 @@ def setup_starlight(replacements: dict[str, str]) -> bool:
 
     print_step("Creating Starlight documentation site...")
     success, output = run_command(
-        ["npm", "create", "astro@latest", "docs", "--", "--template", "starlight", "--no-git", "--skip-houston"],
+        ["npm", "create", "astro@latest", "docs", "--", "--template", "starlight", "--no-git", "--yes"],
         cwd=SCRIPT_DIR,
     )
     if not success:

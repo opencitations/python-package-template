@@ -2,6 +2,18 @@
 
 A template for creating Python packages with UV dependency management, pytest testing, semantic-release versioning, and optional Astro Starlight documentation.
 
+## Getting started
+
+1. Click the **Use this template** button on GitHub:
+
+   !["Use this template" button](.github/images/use_this_template.png)
+
+2. Select **Create a new repository**, fill in the repository name, and click **Create repository**:
+
+   !["Create a new repository" page](.github/images/create_new_repo.png)
+
+3. Clone your new repository and continue with the setup below.
+
 ## Prerequisites
 
 - Python 3.10+

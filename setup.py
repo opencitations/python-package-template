@@ -288,6 +288,11 @@ def main() -> int:
     for filepath in setup_files:
         if filepath.exists():
             filepath.unlink()
+
+    images_dir = SCRIPT_DIR / ".github" / "images"
+    if images_dir.exists():
+        shutil.rmtree(images_dir)
+
     print_success("Setup files removed")
 
     print_header("Setup complete")

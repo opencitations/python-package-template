@@ -71,6 +71,22 @@ def run_command(args: list[str], cwd: Path | None = None) -> tuple[bool, str]:
     return result.returncode == 0, output
 
 
+def run_command_live(args: list[str], cwd: Path | None = None) -> tuple[bool, str]:
+    process = subprocess.Popen(
+        args,
+        cwd=cwd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+    )
+    output_lines = []
+    for line in process.stdout:
+        print(f"     {line}", end="")
+        output_lines.append(line)
+    process.wait()
+    return process.returncode == 0, "".join(output_lines)
+
+
 def copy_starlight_templates(docs_dir: Path, replacements: dict[str, str]) -> None:
     print_step("Copying template files...")
 
@@ -104,7 +120,7 @@ def setup_starlight(replacements: dict[str, str]) -> bool:
     docs_dir = SCRIPT_DIR / "docs"
 
     print_step("Creating Starlight documentation site...")
-    success, output = run_command(
+    success, output = run_command_live(
         ["npm", "create", "astro@latest", "docs", "--", "--template", "starlight", "--no-git", "--yes"],
         cwd=SCRIPT_DIR,
     )
@@ -114,16 +130,8 @@ def setup_starlight(replacements: dict[str, str]) -> bool:
         return False
     print_success("Starlight site created")
 
-    print_step("Installing dependencies...")
-    success, output = run_command(["npm", "install"], cwd=docs_dir)
-    if not success:
-        print_error("Failed to install dependencies")
-        print(output)
-        return False
-    print_success("Dependencies installed")
-
     print_step("Installing rehype-external-links...")
-    success, output = run_command(["npm", "install", "rehype-external-links"], cwd=docs_dir)
+    success, output = run_command_live(["npm", "install", "rehype-external-links"], cwd=docs_dir)
     if not success:
         print_error("Failed to install rehype-external-links")
         print(output)

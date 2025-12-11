@@ -49,3 +49,7 @@ Configure your GitHub repository:
 2. **Enable GitHub Pages** (only if you included documentation)
    - Go to Settings > Pages
    - Set Source to "GitHub Actions"
+
+## Learn more
+
+For detailed explanations of the tools and workflows used in this template, see the [Repository setup guides](https://opencitations.github.io/repository_setup_guides/).

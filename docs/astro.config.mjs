@@ -8,16 +8,16 @@ export default defineConfig({
 			[rehypeExternalLinks, { target: '_blank', rel: ['noopener', 'noreferrer'] }]
 		],
 	},
-	site: 'https://{{GITHUB_USERNAME}}.github.io',
-	base: '/{{PACKAGE_NAME}}',
+	site: 'https://opencitations.github.io',
+	base: '/python-package-template',
 
 	integrations: [
 		starlight({
-			title: '{{PACKAGE_TITLE}}',
-			description: '{{DESCRIPTION}}',
+			title: 'Python Package Template',
+			description: 'A template for creating Python packages with UV, pytest, and Starlight documentation',
 
 			social: [
-				{ icon: 'github', label: 'GitHub', href: 'https://github.com/{{GITHUB_USERNAME}}/{{PACKAGE_NAME}}' },
+				{ icon: 'github', label: 'GitHub', href: 'https://github.com/opencitations/python-package-template' },
 			],
 
 			sidebar: [

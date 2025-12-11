@@ -9,7 +9,6 @@ from datetime import datetime
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).parent.resolve()
-STARLIGHT_TEMPLATE_DIR = SCRIPT_DIR / "_starlight"
 
 
 def print_header(text: str) -> None:
@@ -71,78 +70,6 @@ def run_command(args: list[str], cwd: Path | None = None) -> tuple[bool, str]:
     return result.returncode == 0, output
 
 
-def run_command_live(args: list[str], cwd: Path | None = None) -> tuple[bool, str]:
-    process = subprocess.Popen(
-        args,
-        cwd=cwd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-    )
-    output_lines = []
-    for line in process.stdout:
-        print(f"     {line}", end="")
-        output_lines.append(line)
-    process.wait()
-    return process.returncode == 0, "".join(output_lines)
-
-
-def copy_starlight_templates(docs_dir: Path, replacements: dict[str, str]) -> None:
-    print_step("Copying template files...")
-
-    shutil.copy(
-        STARLIGHT_TEMPLATE_DIR / "astro.config.mjs",
-        docs_dir / "astro.config.mjs",
-    )
-
-    content_dir = docs_dir / "src" / "content" / "docs"
-    shutil.copy(
-        STARLIGHT_TEMPLATE_DIR / "src" / "content" / "docs" / "index.mdx",
-        content_dir / "index.mdx",
-    )
-    shutil.copy(
-        STARLIGHT_TEMPLATE_DIR / "src" / "content" / "docs" / "getting_started.md",
-        content_dir / "getting_started.md",
-    )
-
-    files_to_update = [
-        docs_dir / "astro.config.mjs",
-        content_dir / "index.mdx",
-        content_dir / "getting_started.md",
-    ]
-    for filepath in files_to_update:
-        replace_in_file(filepath, replacements)
-
-    print_success("Template files configured")
-
-
-def setup_starlight(replacements: dict[str, str]) -> bool:
-    docs_dir = SCRIPT_DIR / "docs"
-
-    print_step("Creating Starlight documentation site...")
-    success, output = run_command_live(
-        ["npm", "create", "astro@latest", "docs", "--yes", "--", "--template", "starlight", "--no-git", "--install"],
-        cwd=SCRIPT_DIR,
-    )
-    if not success:
-        print_error("Failed to create Starlight site")
-        print(output)
-        return False
-    print_success("Starlight site created")
-
-    print_step("Installing rehype-external-links...")
-    success, output = run_command_live(["npm", "install", "rehype-external-links"], cwd=docs_dir)
-    if not success:
-        print_error("Failed to install rehype-external-links")
-        print(output)
-        return False
-    print_success("rehype-external-links installed")
-
-    copy_starlight_templates(docs_dir, replacements)
-
-    return True
-
-
 def main() -> int:
     print_header("Python package template setup")
 
@@ -189,23 +116,18 @@ def main() -> int:
 
     replacements = {
         "opencitations/python-package-template": f"{github_username}/{package_name}",
+        "python-package-template": package_name,
         "package-name": package_name,
         "package_name": package_underscore,
         "Package Name": package_title,
+        "Python Package Template": package_title,
         "Package description": description,
+        "A template for creating Python packages with UV, pytest, and Starlight documentation": description,
         "Author Name": author_name,
         "author@example.com": author_email,
-        "username": github_username,
+        "opencitations": github_username,
         "[year]": current_year,
         "[author]": author_name,
-    }
-
-    starlight_replacements = {
-        "{{PACKAGE_NAME}}": package_name,
-        "{{PACKAGE_UNDERSCORE}}": package_underscore,
-        "{{PACKAGE_TITLE}}": package_title,
-        "{{DESCRIPTION}}": description,
-        "{{GITHUB_USERNAME}}": github_username,
     }
 
     files_to_update = [
@@ -232,23 +154,31 @@ def main() -> int:
         readme_path.write_text(content)
         print_success("README.md generated")
 
+    docs_dir = SCRIPT_DIR / "docs"
     if include_docs:
-        npm_available = shutil.which("npm") is not None
-        if not npm_available:
-            print_error("npm not found. Install Node.js to set up documentation.")
-            print("  You can set up Starlight manually later: npm create astro@latest -- --template starlight")
-        else:
-            success = setup_starlight(starlight_replacements)
-            if not success:
-                print_error("Documentation setup failed. You can set it up manually later.")
+        if docs_dir.exists():
+            print_step("Updating documentation files...")
+            docs_files = [
+                docs_dir / "astro.config.mjs",
+                docs_dir / "src" / "content" / "docs" / "index.mdx",
+                docs_dir / "src" / "content" / "docs" / "getting_started.md",
+            ]
+            for filepath in docs_files:
+                if filepath.exists():
+                    replace_in_file(filepath, replacements)
+            print_success("Documentation files updated")
     else:
+        if docs_dir.exists():
+            print_step("Removing documentation directory...")
+            shutil.rmtree(docs_dir)
+            print_success("docs/ removed")
+
         deploy_docs_workflow = SCRIPT_DIR / ".github" / "workflows" / "deploy-docs.yml"
         if deploy_docs_workflow.exists():
             print_step("Removing documentation workflow...")
             deploy_docs_workflow.unlink()
             print_success("deploy-docs.yml removed")
 
-        readme_path = SCRIPT_DIR / "README.md"
         if readme_path.exists():
             print_step("Updating README.md (removing docs section)...")
             content = readme_path.read_text()
@@ -266,11 +196,6 @@ def main() -> int:
             )
             readme_path.write_text(content)
             print_success("README.md updated")
-
-    if STARLIGHT_TEMPLATE_DIR.exists():
-        print_step("Removing Starlight template directory...")
-        shutil.rmtree(STARLIGHT_TEMPLATE_DIR)
-        print_success("_starlight/ removed")
 
     print_step("Checking for UV...")
     uv_available = shutil.which("uv") is not None

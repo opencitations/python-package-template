@@ -213,6 +213,7 @@ def main() -> int:
         SCRIPT_DIR / "LICENSE.md",
         SCRIPT_DIR / "src" / package_underscore / "__init__.py",
         SCRIPT_DIR / "tests" / "test_example.py",
+        SCRIPT_DIR / ".github" / "workflows" / "tests.yml",
     ]
 
     for filepath in files_to_update:

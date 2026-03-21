@@ -6,10 +6,13 @@
 
 """Interactive setup script for the Python package template."""
 
+import json
 import re
 import shutil
 import subprocess
 import sys
+import urllib.error
+import urllib.request
 from datetime import datetime
 from pathlib import Path
 
@@ -25,11 +28,14 @@ def _require_uv() -> None:
 
 
 def _install_rich() -> None:
-    subprocess.run(
+    result = subprocess.run(
         ["uv", "pip", "install", "-q", "rich"],
         capture_output=True,
-        check=True,
     )
+    if result.returncode != 0:
+        print("Failed to install rich. Run this script with:", file=sys.stderr)
+        print("  uv run python setup.py", file=sys.stderr)
+        sys.exit(1)
 
 
 def _uninstall_rich() -> None:
@@ -59,6 +65,39 @@ def run_command(args: list[str], cwd: Path | None = None) -> tuple[bool, str]:
     result = subprocess.run(args, cwd=cwd, capture_output=True, text=True)
     output = result.stdout + result.stderr
     return result.returncode == 0, output
+
+
+def _git_config(key: str) -> str | None:
+    result = subprocess.run(
+        ["git", "config", key], capture_output=True, text=True
+    )
+    value = result.stdout.strip()
+    return value if result.returncode == 0 and value else None
+
+
+def _parse_github_remote() -> tuple[str | None, str | None]:
+    result = subprocess.run(
+        ["git", "remote", "get-url", "origin"], capture_output=True, text=True
+    )
+    if result.returncode != 0:
+        return None, None
+    url = result.stdout.strip()
+    match = re.search(r"github\.com[:/]([^/]+)/([^/.]+)", url)
+    if not match:
+        return None, None
+    return match.group(1), match.group(2)
+
+
+def _fetch_github_description(owner: str, repo: str) -> str | None:
+    url = f"https://api.github.com/repos/{owner}/{repo}"
+    req = urllib.request.Request(url, headers={"Accept": "application/vnd.github+json"})
+    try:
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read())
+        desc = data["description"]
+        return desc if desc else None
+    except (urllib.error.URLError, OSError, json.JSONDecodeError, KeyError):
+        return None
 
 
 def main() -> int:  # pragma: no cover
@@ -96,9 +135,13 @@ def main() -> int:  # pragma: no cover
     print_header("Python package template setup")
     console.print("This script will configure the template for your project.\n")
 
+    gh_owner, gh_repo = _parse_github_remote()
+    default_name = SCRIPT_DIR.name
+
     while True:
         package_name = Prompt.ask(
-            "[bold]Package name[/bold] (e.g., my-awesome-lib)"
+            "[bold]Package name[/bold]",
+            default=default_name,
         ).strip()
         if not package_name:
             console.print("  [yellow]This field is required.[/yellow]")
@@ -112,10 +155,41 @@ def main() -> int:  # pragma: no cover
 
     package_underscore = to_underscore(package_name)
     package_title = package_name.replace("-", " ").title()
-    description = ask_required("Package description")
-    author_name = ask_required("Author name")
-    author_email = ask_required("Author email")
-    github_username = ask_required("GitHub username or organization")
+
+    default_description = None
+    if gh_owner and gh_repo:
+        default_description = _fetch_github_description(gh_owner, gh_repo)
+
+    if default_description:
+        description = Prompt.ask(
+            "[bold]Package description[/bold]", default=default_description
+        ).strip()
+    else:
+        description = ask_required("Package description")
+
+    default_author = _git_config("user.name")
+    default_email = _git_config("user.email")
+
+    if default_author:
+        author_name = Prompt.ask(
+            "[bold]Author name[/bold]", default=default_author
+        ).strip()
+    else:
+        author_name = ask_required("Author name")
+
+    if default_email:
+        author_email = Prompt.ask(
+            "[bold]Author email[/bold]", default=default_email
+        ).strip()
+    else:
+        author_email = ask_required("Author email")
+
+    if gh_owner:
+        github_username = Prompt.ask(
+            "[bold]GitHub username or organization[/bold]", default=gh_owner
+        ).strip()
+    else:
+        github_username = ask_required("GitHub username or organization")
     include_docs = Confirm.ask(
         "[bold]Include Starlight documentation site?[/bold]", default=True
     )

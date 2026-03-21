@@ -25,7 +25,7 @@ A template for creating Python packages with UV dependency management, pytest te
 Run the setup script:
 
 ```bash
-python setup.py
+uv run python setup.py
 ```
 
 The script will ask for:

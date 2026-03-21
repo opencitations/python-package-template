@@ -16,41 +16,27 @@ from pathlib import Path
 SCRIPT_DIR = Path(__file__).parent.resolve()
 
 
-def print_header(text: str) -> None:
-    print(f"\n{'=' * 60}")
-    print(f"  {text}")
-    print(f"{'=' * 60}\n")
+def _require_uv() -> None:
+    if shutil.which("uv"):
+        return
+    print("UV is required to run this setup.", file=sys.stderr)
+    print("Install it from: https://docs.astral.sh/uv/getting-started/installation/", file=sys.stderr)
+    sys.exit(1)
 
 
-def print_step(text: str) -> None:
-    print(f"  -> {text}")
+def _install_rich() -> None:
+    subprocess.run(
+        ["uv", "pip", "install", "-q", "rich"],
+        capture_output=True,
+        check=True,
+    )
 
 
-def print_success(text: str) -> None:
-    print(f"  [OK] {text}")
-
-
-def print_error(text: str) -> None:
-    print(f"  [ERROR] {text}", file=sys.stderr)
-
-
-def ask(prompt: str, default: str = "") -> str:
-    if default:
-        result = input(f"{prompt} [{default}]: ").strip()
-        return result if result else default
-    while True:
-        result = input(f"{prompt}: ").strip()
-        if result:
-            return result
-        print("  This field is required.")
-
-
-def ask_yes_no(prompt: str, default: bool = True) -> bool:
-    default_str = "Y/n" if default else "y/N"
-    result = input(f"{prompt} [{default_str}]: ").strip().lower()
-    if not result:
-        return default
-    return result in ("y", "yes")
+def _uninstall_rich() -> None:
+    subprocess.run(
+        ["uv", "pip", "uninstall", "-y", "rich"],
+        capture_output=True,
+    )
 
 
 def validate_package_name(name: str) -> bool:
@@ -75,39 +61,84 @@ def run_command(args: list[str], cwd: Path | None = None) -> tuple[bool, str]:
     return result.returncode == 0, output
 
 
-def main() -> int:
-    print_header("Python package template setup")
+def main() -> int:  # pragma: no cover
+    _require_uv()
+    _install_rich()
 
-    print("This script will configure the template for your project.\n")
+    # Imported after runtime installation (rich is not a project dependency)
+    from rich.console import Console  # type: ignore[reportMissingImports]
+    from rich.prompt import Confirm, Prompt  # type: ignore[reportMissingImports]
+    from rich.table import Table  # type: ignore[reportMissingImports]
+
+    console = Console()
+
+    def print_header(text: str) -> None:
+        console.print()
+        console.rule(f"[bold]{text}[/bold]", style="cyan")
+        console.print()
+
+    def print_step(text: str) -> None:
+        console.print(f"  [cyan]->[/cyan] {text}")
+
+    def print_success(text: str) -> None:
+        console.print(f"  [green]\\[OK][/green] {text}")
+
+    def print_error(text: str) -> None:
+        console.print(f"  [red]\\[ERROR][/red] {text}", stderr=True)
+
+    def ask_required(label: str) -> str:
+        while True:
+            value = Prompt.ask(f"[bold]{label}[/bold]").strip()
+            if value:
+                return value
+            console.print("  [yellow]This field is required.[/yellow]")
+
+    print_header("Python package template setup")
+    console.print("This script will configure the template for your project.\n")
 
     while True:
-        package_name = ask("Package name (e.g., my-awesome-lib)")
+        package_name = Prompt.ask(
+            "[bold]Package name[/bold] (e.g., my-awesome-lib)"
+        ).strip()
+        if not package_name:
+            console.print("  [yellow]This field is required.[/yellow]")
+            continue
         if validate_package_name(package_name):
             break
-        print("  Invalid name. Use letters, numbers, and hyphens (e.g., my-package).")
+        console.print(
+            "  [yellow]Invalid name. Use letters, numbers, and hyphens"
+            " (e.g., my-package).[/yellow]"
+        )
 
     package_underscore = to_underscore(package_name)
     package_title = package_name.replace("-", " ").title()
-    description = ask("Package description")
-    author_name = ask("Author name")
-    author_email = ask("Author email")
-    github_username = ask("GitHub username or organization")
-    include_docs = ask_yes_no("Include Starlight documentation site?", default=True)
+    description = ask_required("Package description")
+    author_name = ask_required("Author name")
+    author_email = ask_required("Author email")
+    github_username = ask_required("GitHub username or organization")
+    include_docs = Confirm.ask(
+        "[bold]Include Starlight documentation site?[/bold]", default=True
+    )
 
     current_year = str(datetime.now().year)
 
     print_header("Configuration summary")
-    print(f"  Package name:    {package_name}")
-    print(f"  Python import:   {package_underscore}")
-    print(f"  Description:     {description}")
-    print(f"  Author:          {author_name} <{author_email}>")
-    print(f"  GitHub:          {github_username}/{package_name}")
-    print(f"  Documentation:   {'Yes (Starlight)' if include_docs else 'No'}")
-    print()
 
-    confirm = input("Proceed with setup? [Y/n]: ").strip().lower()
-    if confirm and confirm != "y":
-        print("\nSetup cancelled.")
+    table = Table(show_header=False, box=None, padding=(0, 2))
+    table.add_column(style="bold")
+    table.add_column()
+    table.add_row("Package name", package_name)
+    table.add_row("Python import", package_underscore)
+    table.add_row("Description", description)
+    table.add_row("Author", f"{author_name} <{author_email}>")
+    table.add_row("GitHub", f"{github_username}/{package_name}")
+    table.add_row("Documentation", "Yes (Starlight)" if include_docs else "No")
+    console.print(table)
+    console.print()
+
+    if not Confirm.ask("Proceed with setup?", default=True):
+        console.print("\n[yellow]Setup cancelled.[/yellow]")
+        _uninstall_rich()
         return 1
 
     print_header("Configuring project")
@@ -216,22 +247,16 @@ def main() -> int:
             readme_path.write_text(content)
             print_success("README.md updated")
 
-    print_step("Checking for UV...")
-    uv_available = shutil.which("uv") is not None
-
-    if uv_available:
-        print_step("Running uv sync --all-extras --dev")
-        success, output = run_command(
-            ["uv", "sync", "--all-extras", "--dev"],
-            cwd=SCRIPT_DIR,
-        )
-        if success:
-            print_success("Dependencies installed")
-        else:
-            print_error("uv sync failed. Run it manually after setup.")
-            print(output)
+    print_step("Running uv sync --all-extras --dev")
+    success, output = run_command(
+        ["uv", "sync", "--all-extras", "--dev"],
+        cwd=SCRIPT_DIR,
+    )
+    if success:
+        print_success("Dependencies installed")
     else:
-        print("  UV not found. Run 'uv sync --all-extras --dev' manually.")
+        print_error("uv sync failed. Run it manually after setup.")
+        console.print(output)
 
     print_step("Removing setup files")
     setup_files = [
@@ -255,31 +280,42 @@ def main() -> int:
 
     print_success("Setup files removed")
 
+    _uninstall_rich()
+
     print_header("Setup complete")
-    print("Your project is ready. Next steps:\n")
-    print("1. Configure GitHub repository:")
-    print("   - Create PyPI token: https://pypi.org/manage/account/token/")
-    print(f"   - Add as secret: https://github.com/{github_username}/{package_name}/settings/secrets/actions/new")
-    print("     Name: PYPI_TOKEN")
+    console.print("Your project is ready. Next steps:\n")
+    console.print("[bold]1. Configure GitHub repository:[/bold]")
+    console.print("   - Create PyPI token: https://pypi.org/manage/account/token/")
+    console.print(
+        f"   - Add as secret: https://github.com/{github_username}/{package_name}"
+        "/settings/secrets/actions/new"
+    )
+    console.print("     Name: PYPI_TOKEN")
     if include_docs:
-        print(f"   - Enable GitHub Pages: https://github.com/{github_username}/{package_name}/settings/pages")
-        print("     Source: GitHub Actions")
-    print()
-    print("2. Commit and push:")
-    print("   git add .")
-    print('   git commit -m "feat: initial project setup"')
-    print("   git push")
+        console.print(
+            f"   - Enable GitHub Pages: https://github.com/{github_username}"
+            f"/{package_name}/settings/pages"
+        )
+        console.print("     Source: GitHub Actions")
+    console.print()
+    console.print("[bold]2. Commit and push:[/bold]")
+    console.print('   git add .')
+    console.print('   git commit -m "feat: initial project setup"')
+    console.print("   git push")
     if include_docs:
-        print()
-        print("   Warning: if GitHub Pages is not configured with 'GitHub Actions'")
-        print("   as source, the documentation deployment will fail.")
-    print()
-    print("3. Start developing:")
-    print(f"   - Edit src/{package_underscore}/__init__.py")
-    print("   - Add tests in tests/")
+        console.print()
+        console.print(
+            "   [yellow]Warning: if GitHub Pages is not configured with"
+            " 'GitHub Actions' as source, the documentation deployment"
+            " will fail.[/yellow]"
+        )
+    console.print()
+    console.print("[bold]3. Start developing:[/bold]")
+    console.print(f"   - Edit src/{package_underscore}/__init__.py")
+    console.print("   - Add tests in tests/")
     if include_docs:
-        print("   - Update documentation in docs/src/content/docs/")
-    print()
+        console.print("   - Update documentation in docs/src/content/docs/")
+    console.print()
 
     return 0
 

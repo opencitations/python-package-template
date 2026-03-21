@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 # SPDX-FileCopyrightText: [year] Author Name <author@example.com>
 #
 # SPDX-License-Identifier: ISC

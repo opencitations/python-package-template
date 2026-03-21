@@ -1,10 +1,8 @@
-<!--
-SPDX-FileCopyrightText: [year] Author Name <author@example.com>
-
-SPDX-License-Identifier: ISC
--->
-
 ---
+# SPDX-FileCopyrightText: [year] Author Name <author@example.com>
+#
+# SPDX-License-Identifier: ISC
+
 title: Getting started
 description: How to use the Python package template
 ---

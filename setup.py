@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: [year] Author Name <author@example.com>
+#
+# SPDX-License-Identifier: ISC
+
 """Interactive setup script for the Python package template."""
 
 import re
@@ -133,9 +137,14 @@ def main() -> int:
     files_to_update = [
         SCRIPT_DIR / "pyproject.toml",
         SCRIPT_DIR / "LICENSE.md",
+        SCRIPT_DIR / "REUSE.toml",
         SCRIPT_DIR / "src" / package_underscore / "__init__.py",
+        SCRIPT_DIR / "tests" / "__init__.py",
         SCRIPT_DIR / "tests" / "test_example.py",
         SCRIPT_DIR / ".github" / "workflows" / "tests.yml",
+        SCRIPT_DIR / ".github" / "workflows" / "release.yml",
+        SCRIPT_DIR / ".github" / "workflows" / "deploy-docs.yml",
+        SCRIPT_DIR / ".github" / "workflows" / "reuse.yml",
     ]
 
     for filepath in files_to_update:
@@ -160,6 +169,7 @@ def main() -> int:
             print_step("Updating documentation files...")
             docs_files = [
                 docs_dir / "astro.config.mjs",
+                docs_dir / "src" / "content.config.ts",
                 docs_dir / "src" / "content" / "docs" / "index.mdx",
                 docs_dir / "src" / "content" / "docs" / "getting_started.md",
             ]
@@ -178,6 +188,14 @@ def main() -> int:
             print_step("Removing documentation workflow...")
             deploy_docs_workflow.unlink()
             print_success("deploy-docs.yml removed")
+
+        reuse_toml = SCRIPT_DIR / "REUSE.toml"
+        if reuse_toml.exists():
+            print_step("Removing docs entries from REUSE.toml...")
+            content = reuse_toml.read_text()
+            content = re.sub(r'    "docs/[^\n]+\n', "", content)
+            reuse_toml.write_text(content)
+            print_success("REUSE.toml updated")
 
         if readme_path.exists():
             print_step("Updating README.md (removing docs section)...")
@@ -226,6 +244,13 @@ def main() -> int:
     images_dir = SCRIPT_DIR / ".github" / "images"
     if images_dir.exists():
         shutil.rmtree(images_dir)
+
+    reuse_toml = SCRIPT_DIR / "REUSE.toml"
+    if reuse_toml.exists():
+        content = reuse_toml.read_text()
+        content = re.sub(r'    "README_TEMPLATE\.md",\n', "", content)
+        content = re.sub(r'    "\.github/images/\*\*",\n', "", content)
+        reuse_toml.write_text(content)
 
     print_success("Setup files removed")
 

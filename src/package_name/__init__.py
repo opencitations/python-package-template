@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: [year] Author Name <author@example.com>
+#
+# SPDX-License-Identifier: ISC
+
 """Package description."""
 
 __version__ = "0.1.0"

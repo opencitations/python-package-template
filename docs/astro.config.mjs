@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: [year] Author Name <author@example.com>
+//
+// SPDX-License-Identifier: ISC
+
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import rehypeExternalLinks from 'rehype-external-links';

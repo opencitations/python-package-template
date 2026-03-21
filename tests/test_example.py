@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: [year] Author Name <author@example.com>
+#
+# SPDX-License-Identifier: ISC
+
 """Example tests for package_name."""
 
 from package_name import example_function

@@ -20,9 +20,9 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/username/package-name"
-Documentation = "https://username.github.io/package-name/"
-Repository = "https://github.com/username/package-name"
+Homepage = "https://github.com/opencitations/python-package-template"
+Documentation = "https://opencitations.github.io/python-package-template/"
+Repository = "https://github.com/opencitations/python-package-template"
 
 [dependency-groups]
 dev = [

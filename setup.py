@@ -166,12 +166,11 @@ def main() -> int:  # pragma: no cover
     if gh_owner and gh_repo:
         default_description = _fetch_github_description(gh_owner, gh_repo)
 
-    if default_description:
-        description = Prompt.ask(
-            "[bold]Package description[/bold]", default=default_description
-        ).strip()
-    else:
-        description = ask_required("Package description")
+    description = Prompt.ask(
+        "[bold]Package description (optional)[/bold]",
+        default=default_description or "",
+        show_default=bool(default_description),
+    ).strip()
 
     default_author = _git_config("user.name")
     default_email = _git_config("user.email")
@@ -230,7 +229,18 @@ def main() -> int:  # pragma: no cover
         shutil.move(str(src_old), str(src_new))
         print_success("Package directory renamed")
 
+    template_description = "A template for creating Python packages with UV, pytest, and Jupyter Book documentation"
+    description_lines = (
+        {}
+        if description
+        else {
+            '"""Package description."""\n\n': "",
+            "Package description.\n\n": "",
+            f"{template_description}\n\n": "",
+        }
+    )
     replacements = {
+        **description_lines,
         "opencitations/python-package-template": f"{github_username}/{package_name}",
         "python-package-template": package_name,
         "package-name": package_name,
@@ -238,7 +248,7 @@ def main() -> int:  # pragma: no cover
         "Package Name": package_title,
         "Python Package Template": package_title,
         "Package description": description,
-        "A template for creating Python packages with UV, pytest, and Jupyter Book documentation": description,
+        template_description: description,
         "Author Name": author_name,
         "author@example.com": author_email,
         "opencitations": github_username,

@@ -24,7 +24,7 @@ print(result)
 
 ## Documentation
 
-Full documentation is available at: https://username.github.io/package-name/
+Full documentation is available at: https://opencitations.github.io/python-package-template/
 
 ## Development
 
@@ -34,8 +34,8 @@ This project uses [UV](https://docs.astral.sh/uv/) for dependency management.
 
 ```bash
 # Clone the repository
-git clone https://github.com/username/package-name.git
-cd package-name
+git clone https://github.com/opencitations/python-package-template.git
+cd python-package-template
 
 # Install dependencies
 uv sync --all-extras --dev

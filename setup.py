@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # SPDX-FileCopyrightText: [year] Author Name <author@example.com>
 #
 # SPDX-License-Identifier: ISC
@@ -13,7 +11,7 @@ import subprocess
 import sys
 import urllib.error
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).parent.resolve()
@@ -23,7 +21,10 @@ def _require_uv() -> None:
     if shutil.which("uv"):
         return
     print("UV is required to run this setup.", file=sys.stderr)
-    print("Install it from: https://docs.astral.sh/uv/getting-started/installation/", file=sys.stderr)
+    print(
+        "Install it from: https://docs.astral.sh/uv/getting-started/installation/",
+        file=sys.stderr,
+    )
     sys.exit(1)
 
 
@@ -31,6 +32,7 @@ def _install_rich() -> None:
     result = subprocess.run(
         ["uv", "pip", "install", "-q", "rich"],
         capture_output=True,
+        check=False,
     )
     if result.returncode != 0:
         print("Failed to install rich. Run this script with:", file=sys.stderr)
@@ -42,6 +44,7 @@ def _uninstall_rich() -> None:
     subprocess.run(
         ["uv", "pip", "uninstall", "-y", "rich"],
         capture_output=True,
+        check=False,
     )
 
 
@@ -62,14 +65,14 @@ def replace_in_file(filepath: Path, replacements: dict[str, str]) -> None:
 
 
 def run_command(args: list[str], cwd: Path | None = None) -> tuple[bool, str]:
-    result = subprocess.run(args, cwd=cwd, capture_output=True, text=True)
+    result = subprocess.run(args, cwd=cwd, capture_output=True, text=True, check=False)
     output = result.stdout + result.stderr
     return result.returncode == 0, output
 
 
 def _git_config(key: str) -> str | None:
     result = subprocess.run(
-        ["git", "config", key], capture_output=True, text=True
+        ["git", "config", key], capture_output=True, text=True, check=False
     )
     value = result.stdout.strip()
     return value if result.returncode == 0 and value else None
@@ -77,7 +80,10 @@ def _git_config(key: str) -> str | None:
 
 def _parse_github_remote() -> tuple[str | None, str | None]:
     result = subprocess.run(
-        ["git", "remote", "get-url", "origin"], capture_output=True, text=True
+        ["git", "remote", "get-url", "origin"],
+        capture_output=True,
+        text=True,
+        check=False,
     )
     if result.returncode != 0:
         return None, None
@@ -191,10 +197,10 @@ def main() -> int:  # pragma: no cover
     else:
         github_username = ask_required("GitHub username or organization")
     include_docs = Confirm.ask(
-        "[bold]Include Starlight documentation site?[/bold]", default=True
+        "[bold]Include Jupyter Book documentation site?[/bold]", default=True
     )
 
-    current_year = str(datetime.now().year)
+    current_year = str(datetime.now(tz=timezone.utc).year)
 
     print_header("Configuration summary")
 
@@ -206,7 +212,7 @@ def main() -> int:  # pragma: no cover
     table.add_row("Description", description)
     table.add_row("Author", f"{author_name} <{author_email}>")
     table.add_row("GitHub", f"{github_username}/{package_name}")
-    table.add_row("Documentation", "Yes (Starlight)" if include_docs else "No")
+    table.add_row("Documentation", "Yes (Jupyter Book)" if include_docs else "No")
     console.print(table)
     console.print()
 
@@ -232,7 +238,7 @@ def main() -> int:  # pragma: no cover
         "Package Name": package_title,
         "Python Package Template": package_title,
         "Package description": description,
-        "A template for creating Python packages with UV, pytest, and Starlight documentation": description,
+        "A template for creating Python packages with UV, pytest, and Jupyter Book documentation": description,
         "Author Name": author_name,
         "author@example.com": author_email,
         "opencitations": github_username,
@@ -274,10 +280,9 @@ def main() -> int:  # pragma: no cover
         if docs_dir.exists():
             print_step("Updating documentation files...")
             docs_files = [
-                docs_dir / "astro.config.mjs",
-                docs_dir / "src" / "content.config.ts",
-                docs_dir / "src" / "content" / "docs" / "index.mdx",
-                docs_dir / "src" / "content" / "docs" / "getting_started.md",
+                docs_dir / "_config.yml",
+                docs_dir / "index.md",
+                docs_dir / "getting_started.md",
             ]
             for filepath in docs_files:
                 if filepath.exists():
@@ -295,13 +300,16 @@ def main() -> int:  # pragma: no cover
             deploy_docs_workflow.unlink()
             print_success("deploy-docs.yml removed")
 
-        reuse_toml = SCRIPT_DIR / "REUSE.toml"
-        if reuse_toml.exists():
-            print_step("Removing docs entries from REUSE.toml...")
-            content = reuse_toml.read_text()
-            content = re.sub(r'    "docs/[^\n]+\n', "", content)
-            reuse_toml.write_text(content)
-            print_success("REUSE.toml updated")
+        print_step("Removing jupyter-book dependency...")
+        success, output = run_command(
+            ["uv", "remove", "--dev", "--no-sync", "jupyter-book"],
+            cwd=SCRIPT_DIR,
+        )
+        if success:
+            print_success("jupyter-book removed")
+        else:
+            print_error("uv remove failed. Run it manually after setup.")
+            console.print(output)
 
         if readme_path.exists():
             print_step("Updating README.md (removing docs section)...")
@@ -373,7 +381,7 @@ def main() -> int:  # pragma: no cover
         console.print("     Source: GitHub Actions")
     console.print()
     console.print("[bold]2. Commit and push:[/bold]")
-    console.print('   git add .')
+    console.print("   git add .")
     console.print('   git commit -m "feat: initial project setup"')
     console.print("   git push")
     if include_docs:
@@ -388,7 +396,7 @@ def main() -> int:  # pragma: no cover
     console.print(f"   - Edit src/{package_underscore}/__init__.py")
     console.print("   - Add tests in tests/")
     if include_docs:
-        console.print("   - Update documentation in docs/src/content/docs/")
+        console.print("   - Update documentation in docs/")
     console.print()
 
     return 0

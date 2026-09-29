@@ -1,17 +1,15 @@
----
-# SPDX-FileCopyrightText: [year] Author Name <author@example.com>
-#
-# SPDX-License-Identifier: ISC
+<!--
+SPDX-FileCopyrightText: [year] Author Name <author@example.com>
 
-title: Getting started
-description: How to use the Python package template
----
+SPDX-License-Identifier: ISC
+-->
+
+# Getting started
 
 ## Prerequisites
 
 - **UV**: Install from https://docs.astral.sh/uv/getting-started/installation/
 - **Python 3.10+**: UV can install Python for you with `uv python install`
-- **Node.js and npm** (for documentation): Install from https://nodejs.org/en/download
 
 ## Using the template
 
@@ -21,7 +19,7 @@ description: How to use the Python package template
 4. Run the setup script:
 
 ```bash
-python setup.py
+uv run python setup.py
 ```
 
 The script will ask for:
@@ -54,6 +52,5 @@ uv sync --all-extras --dev
 uv run pytest tests/
 
 # Build documentation locally
-cd docs
-npm run dev
+uv run jupyter-book build --builder dirhtml docs
 ```

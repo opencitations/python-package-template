@@ -1,6 +1,6 @@
 # Python package template
 
-A template for creating Python packages with UV dependency management, pytest testing, semantic-release versioning, and optional Astro Starlight documentation.
+A template for creating Python packages with UV dependency management, pytest testing, semantic-release versioning, and optional Jupyter Book documentation.
 
 ## Getting started
 
@@ -18,7 +18,6 @@ A template for creating Python packages with UV dependency management, pytest te
 
 - **UV**: Install from https://docs.astral.sh/uv/getting-started/installation/
 - **Python 3.10+**: UV can install Python for you with `uv python install`
-- **Node.js and npm** (only for documentation site): Install from https://nodejs.org/en/download
 
 ## Setup
 
@@ -33,7 +32,7 @@ The script will ask for:
 - Description
 - Author name and email
 - GitHub username/organization
-- Whether to include a Starlight documentation site
+- Whether to include a Jupyter Book documentation site
 
 It will automatically configure all files and remove itself when done.
 

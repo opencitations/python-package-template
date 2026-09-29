@@ -50,10 +50,10 @@ uv run pytest tests/
 ### Building documentation locally
 
 ```bash
-cd docs
-npm install
-npm run dev
+uv run jupyter-book build --builder dirhtml docs
 ```
+
+The site is written to `docs/_build/dirhtml/`.
 
 ## License
 

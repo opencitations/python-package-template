@@ -10,11 +10,6 @@ path = [
     "CHANGELOG.md",
     "LICENSE.md",
     "README.md",
-    "docs/.gitignore",
-    "docs/tsconfig.json",
-    "docs/package.json",
-    "docs/package-lock.json",
-    "docs/public/favicon.svg",
     "README_TEMPLATE.md",
     ".github/images/**",
 ]

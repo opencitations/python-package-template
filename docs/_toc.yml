@@ -1,0 +1,11 @@
+# SPDX-FileCopyrightText: [year] Author Name <author@example.com>
+#
+# SPDX-License-Identifier: ISC
+
+format: jb-book
+root: index
+parts:
+  - caption: Guides
+    numbered: false
+    chapters:
+    - file: getting_started

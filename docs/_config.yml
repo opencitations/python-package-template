@@ -1,0 +1,34 @@
+# SPDX-FileCopyrightText: [year] Author Name <author@example.com>
+#
+# SPDX-License-Identifier: ISC
+
+title: "Python Package Template"
+author: Author Name
+copyright: "[year]"
+
+exclude_patterns:
+  - _build
+
+execute:
+  execute_notebooks: "off"
+
+repository:
+  url: https://github.com/opencitations/python-package-template
+  branch: main
+
+html:
+  use_issues_button: true
+  use_repository_button: true
+  baseurl: https://opencitations.github.io/python-package-template/
+  extra_footer: |
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        var links = document.querySelectorAll('a[href^="http"]');
+        links.forEach(function(link) {
+          if (link.hostname !== window.location.hostname) {
+            link.setAttribute('target', '_blank');
+            link.setAttribute('rel', 'noopener noreferrer');
+          }
+        });
+      });
+    </script>
